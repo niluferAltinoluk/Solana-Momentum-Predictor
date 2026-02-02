@@ -1,11 +1,18 @@
 # Project Overview
-This project is a machine learning solution designed to identify high-potential and profitable tokens on Pumpfun, the meme token platform within the Solana ecosystem, 
-at the most critical moment of a token's lifecycle.
+This project is an advanced machine learning solution designed to identify high-potential and profitable tokens on the Solana Pumpfun platform. The core challenge is making a "buy" decision within the first 30 seconds of a token's lifecycle, where volatility is highest and data is scarcest.
 
-# Data
-The provided data set consists of 30 days of transaction records for tokens launched on the Pumpfun platform. Each row represents a specific event related to a token, identified by its mint_token_id.
+# Data Architecture & Engineering
+The model processes a massive dataset of 30 days of transaction records (approx. 9.5M rows), transforming raw events into actionable intelligence.
 
-Data Columns Summary
+*Time-Critical Transformation:* Developed a custom pipeline to align non-standard timestamps into UTC datetime objects, enabling precise filtering for the 30-second prediction window.
+
+*Target Identification:* Integrated separate wallet-specific target lists to create a binary classification target (is_target).
+
+*Optimized Preprocessing*:  * Winsorization: Outliers are clipped at 1st/99th percentiles to ensure model stability against extreme price/volume swings.
+
+*Feature Aggregation:* Transformed transaction-level data into token-level summary statistics (velocity, momentum, creator trust signals).
+
+# Data Columns Summary
 The dataset is rich in features, including:
 
 Identifiers and Timestamps: Row ID / sequence, timestamp (Event time in UTC), mint_token_id, holder, and creator.
@@ -41,6 +48,19 @@ Data Partitioning: The final data structure includes a stabilized feature set re
 6. Model Training & Prediction: CatBoost is trained using Stratified 5-Fold CV. OOF predictions are generated for threshold optimization, and the final test predictions (test_preds) are calculated as the average of the 5 folds.
 7. Final Output Generation: The optimal threshold is applied to the final test_preds to create the final binary predictions, which are then exported into the required submission.csv and detailed_report.csv formats.
 
+# Model Architecture: CatBoost & Optimization
+A CatBoost Classifier was selected for its superior handling of categorical features and robustness against noisy financial data.
+
+Validation Strategy: Employed Stratified 5-Fold Cross-Validation to maintain the rare class ratio (profitable tokens are "needles in a haystack").
+
+Strategic Optimization:
+
+Recall-First Approach: The model is tuned to ensure a Recall ≥ 0.75, capturing at least 75% of all profitable tokens.
+
+Jaccard Index (IoU) Maximization: Beyond recall, we optimize the threshold (moving away from the default 0.5) to maximize the Jaccard Index, balancing precision with sensitivity.
+
+Early Stopping: 3000 iterations with a 100-round patience window to prevent overfitting.
+
 
 
 ## Feature Engineering Strategy
@@ -59,9 +79,15 @@ The core challenge is predicting token success within the first 30 seconds. Ther
 * Threshold Optimization : nstead of using the default $0.5$ threshold, an optimized threshold was found on the OOF prediction scores:Method: Iterating through thresholds ($0.005$ to $0.99$) and selecting the threshold that maximizes the Jaccard Index (Intersection over Union) while strictly maintaining the Recall score $\ge 0.75$.Result: This ensures the final model output meets the minimum success baseline while prioritizing precision for the final predicted subset.
 
 # Results and Evaluation
-* Final Recall : The rate of profitable token detection (surpassed the $\ge 75\%$ baseline).
-* Jaccard Index (IoU) : The optimization target after achieving the minimum Recall threshold (balance between Precision and Recall).
-* Optimal Threshold : The threshold value that maximizes Jaccard while ensuring Recall $\ge 0.75$.
-* Prediction Time : Feature engineering was exclusively performed on data filtered to a token's first 30 seconds of lifespan.
+* Target Metric: Jaccard Index (IoU) while maintaining Recall > 0.75.
+
+* Efficiency: Feature engineering and inference are optimized for near real-time execution.
+
+# Tech Stack
+Languages: Python (Pandas, NumPy, Scipy)
+
+ML Frameworks: CatBoost, Scikit-Learn
+
+Tools: Jupyter Notebook, Kaggle Environment, Git
 
 
