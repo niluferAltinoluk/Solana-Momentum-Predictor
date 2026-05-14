@@ -48,10 +48,15 @@ A **CatBoost Classifier** was selected for its superior handling of categorical 
 ---
 
 # Project Structure
+
 ├── data/                   # Transaction logs (9.5M rows)
+
 ├── notebooks/              # Feature Engineering & CatBoost Training
+
 ├── models/                 # Saved CatBoost weights (5-Fold)
+
 ├── outputs/                # submission.csv & detailed_report.csv
+
 └── README.md               # Documentation
 
 
